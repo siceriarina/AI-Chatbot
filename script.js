@@ -4,7 +4,7 @@ const sendButton = document.getElementById("send-button");
 
 
 // ===============================
-// FUNGSI MENAMBAHKAN PESAN
+// MENAMBAHKAN PESAN KE CHAT
 // ===============================
 
 function addMessage(message, sender) {
@@ -44,20 +44,19 @@ function addMessage(message, sender) {
 
     chatBox.appendChild(messageDiv);
 
-    // Scroll otomatis ke pesan terbaru
+    // Scroll ke pesan terbaru
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 
 // ===============================
-// FUNGSI MENGIRIM PESAN
+// MENGIRIM PESAN KE AI
 // ===============================
 
-function sendMessage() {
+async function sendMessage() {
 
     const message = userInput.value.trim();
 
-    // Jangan kirim kalau kosong
     if (message === "") {
         return;
     }
@@ -68,21 +67,78 @@ function sendMessage() {
     // Kosongkan input
     userInput.value = "";
 
-    // Nonaktifkan tombol sementara
+    // Matikan tombol sementara
     sendButton.disabled = true;
+    sendButton.textContent = "...";
 
-    // Simulasi AI berpikir
-    setTimeout(() => {
+
+    // Tampilkan AI sedang berpikir
+    addMessage("Sedang berpikir... 🤔", "ai");
+
+
+    try {
+
+        const response = await fetch("/chat", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                message: message
+            })
+
+        });
+
+
+        const data = await response.json();
+
+
+        // Hapus pesan "Sedang berpikir..."
+        const messages = document.querySelectorAll(".ai-message");
+
+        if (messages.length > 0) {
+            messages[messages.length - 1].remove();
+        }
+
+
+        if (data.reply) {
+
+            addMessage(data.reply, "ai");
+
+        } else {
+
+            addMessage(
+                "Maaf, AI mengalami masalah 😭",
+                "ai"
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        // Hapus "Sedang berpikir..."
+        const messages = document.querySelectorAll(".ai-message");
+
+        if (messages.length > 0) {
+            messages[messages.length - 1].remove();
+        }
 
         addMessage(
-            "Aku menerima pesan kamu! 🤖<br><br>" +
-            "Nanti kita sambungkan aku ke AI sungguhan ya 😎",
+            "Waduh, aku gagal terhubung ke server 😭",
             "ai"
         );
 
-        sendButton.disabled = false;
+    }
 
-    }, 800);
+
+    // Aktifkan tombol lagi
+    sendButton.disabled = false;
+    sendButton.textContent = "Kirim";
 }
 
 
@@ -94,7 +150,7 @@ sendButton.addEventListener("click", sendMessage);
 
 
 // ===============================
-// TEKAN ENTER UNTUK MENGIRIM
+// ENTER UNTUK MENGIRIM
 // ===============================
 
 userInput.addEventListener("keydown", function(event) {
