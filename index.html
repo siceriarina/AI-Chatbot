@@ -1,61 +1,72 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html> <html lang="id"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mochi GEMESS 🍡</title>
 
-    <title>Mochi GEMESS</title>
+<link rel="stylesheet" href="style.css">
 
-    <link rel="stylesheet" href="style.css">
-</head>
+</head> <body>
+<div class="container">
 
-<body>
+    <!-- HEADER -->
+    <header>
+        <div class="logo">🍡</div>
 
-    <div class="container">
+        <div>
+            <h1>Mochi</h1>
+            <p>Teman ngobrol anti-gabut 🤣</p>
+        </div>
+    </header>
 
-        <header>
-            <div class="logo">🍡</div>
-            <div>
-                <h1>Mochi</h1>
-                <p>Teman ngobrol anti-gabut🤣</p>
+
+    <!-- CHAT -->
+    <main id="chat-box">
+
+        <div class="message ai-message">
+
+            <div class="avatar">🍡</div>
+
+            <div class="bubble">
+                Halo! 👋🍡<br>
+                Mochi lagi bangun dulu... 🥱
             </div>
-        </header>
-
-        <main id="chat-box">
-
-            <div class="message ai-message">
-               <div class="avatar">🍡</div>
-
-                <div class="bubble">
-                    Halo! 👋<br>
-                    Aku Mochi. Ada yang mau kamu tanyakan?
-                </div>
-            </div>
-
-        </main>
-
-        <div class="input-area">
-
-            <input
-                type="text"
-                id="user-input"
-                placeholder="Tulis pesan kamu..."
-                autocomplete="off"
-            >
-
-            <button id="send-button">
-                Kirim
-            </button>
 
         </div>
 
-        <p class="footer">
-            Mochi IMOET • Dibuat dengan ❤️
-        </p>
+    </main>
+
+
+    <!-- INPUT -->
+    <div class="input-area">
+
+        <input
+            type="text"
+            id="user-input"
+            placeholder="Tunggu Mochi bangun..."
+            autocomplete="off"
+            disabled
+        >
+
+        <button
+            id="send-button"
+            disabled
+        >
+            Tunggu...
+        </button>
 
     </div>
 
-    <script src="script.js"></script>
 
-</body>
-</html>
+    <!-- FOOTER -->
+    <p class="footer">
+        Mochi IMOET • Dibuat dengan ❤️
+    </p>
+
+</div>
+
+
+<!-- JAVASCRIPT -->
+<script
+    type="module"
+    src="script.js"
+></script>
+
+</body> </html>
