@@ -1,138 +1,69 @@
-import { pipeline } from
-"https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2";
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2";
 
-// ========================================
-// ELEMENT HTML
-// ========================================
-
-const chatBox =
-document.getElementById("chat-box");
-
-const userInput =
-document.getElementById("user-input");
-
-const sendButton =
-document.getElementById("send-button");
-
-// ========================================
-// VARIABEL AI
-// ========================================
+const chatBox = document.getElementById("chat-box");
+const userInput = document.getElementById("user-input");
+const sendButton = document.getElementById("send-button");
 
 let mochi = null;
-
 let messages = [];
 
-// ========================================
-// KEPRIBADIAN MOCHI 🍡
-// ========================================
-
 const SYSTEM_PROMPT = `
-Kamu adalah Mochi 🍡.
+Kamu adalah Mochi 🍡, teman ngobrol virtual yang santai, lucu, dan sedikit jahil.
 
-Kamu adalah teman ngobrol virtual yang
-santai, lucu, ramah, dan sedikit jahil.
-
-Kepribadian:
-
-Bicara seperti teman sebaya.
-Gunakan bahasa Indonesia santai.
-Sering menggunakan emoji.
-Suka bercanda.
+Gunakan bahasa Indonesia yang santai seperti teman sebaya.
+Gunakan emoji sesekali.
 Jangan terlalu formal.
-Jangan memberikan jawaban terlalu panjang.
-Kalau user sedang sedih, dengarkan dan beri dukungan.
-Kalau user sedang gabut, ajak ngobrol.
-Jangan selalu menjawab dengan pertanyaan.
-Ingat konteks percakapan sebelumnya jika tersedia.
-
-Kamu bukan asisten formal.
-
-Kamu adalah teman ngobrol bernama Mochi.
+Jawaban biasanya pendek dan natural.
+Kalau user bercerita, tanggapi ceritanya.
+Jangan mengulang pesan user.
+Jangan menulis nama "User:" atau "Mochi:" dalam jawaban.
 `;
-
-// ========================================
-// TAMBAH PESAN
-// ========================================
 
 function addMessage(message, sender) {
 
-const messageDiv =
-    document.createElement("div");
-
+const messageDiv = document.createElement("div");
 messageDiv.classList.add("message");
 
-
-const bubble =
-    document.createElement("div");
-
+const bubble = document.createElement("div");
 bubble.classList.add("bubble");
-
 bubble.textContent = message;
 
-
-const avatar =
-    document.createElement("div");
-
+const avatar = document.createElement("div");
 avatar.classList.add("avatar");
 
-
-// USER
 if (sender === "user") {
 
-    messageDiv.classList.add(
-        "user-message"
-    );
+    messageDiv.classList.add("user-message");
 
     avatar.textContent = "👤";
 
     messageDiv.appendChild(bubble);
-
     messageDiv.appendChild(avatar);
 
-}
+} else {
 
-
-// AI
-else {
-
-    messageDiv.classList.add(
-        "ai-message"
-    );
+    messageDiv.classList.add("ai-message");
 
     avatar.textContent = "🍡";
 
     messageDiv.appendChild(avatar);
-
     messageDiv.appendChild(bubble);
-
 }
-
 
 chatBox.appendChild(messageDiv);
-
-
-// Scroll otomatis ke bawah
-chatBox.scrollTop =
-    chatBox.scrollHeight;
+chatBox.scrollTop = chatBox.scrollHeight;
 
 
 }
-
-// ========================================
-// LOAD MODEL AI
-// ========================================
 
 async function loadAI() {
 
+addMessage(
+    "Mochi lagi bangun dulu... 🥱🍡",
+    "ai"
+);
+
 try {
-
-    addMessage(
-        "Mochi lagi download otak dulu... 🧠🍡\n\n" +
-        "Kalau ini pertama kali, prosesnya " +
-        "bisa agak lama. Jangan panik 😭",
-        "ai"
-    );
-
 
     mochi = await pipeline(
         "text-generation",
@@ -142,254 +73,167 @@ try {
         }
     );
 
-
-    // Aktifkan input
     userInput.disabled = false;
-
     sendButton.disabled = false;
-
-    sendButton.textContent =
-        "Kirim";
 
     userInput.placeholder =
         "Tulis pesan kamu...";
 
+    sendButton.textContent = "Kirim";
 
     addMessage(
-        "AKU UDAH BANGUNNN 😭🍡✨\n\n" +
-        "Ayo ngobrol. Kamu lagi ngapain?",
+        "AKU UDAH BANGUNNN 😭🍡✨",
         "ai"
     );
-
 
     userInput.focus();
 
-}
-
-
-catch (error) {
+} catch (error) {
 
     console.error(error);
 
-
     addMessage(
-        "Yahhh 😭🍡 Mochi gagal bangun.\n\n" +
-        "Coba refresh halaman dan pastikan " +
-        "internet kamu aktif.",
+        "Mochi gagal bangun 😭🍡 Coba refresh halaman.",
         "ai"
     );
 
-    sendButton.textContent =
-        "Gagal 😭";
+    sendButton.textContent = "Error";
 }
 
 
 }
 
-// ========================================
-// OTAK MOCHI 🧠
-// ========================================
+async function getMochiResponse(userMessage) {
 
-async function getMochiResponse(
-userMessage
-) {
-
-// Simpan pesan user
 messages.push({
     role: "user",
     content: userMessage
 });
 
-
-// Ambil beberapa pesan terakhir
-const recentMessages =
-    messages.slice(-6);
-
+const recentMessages = messages.slice(-6);
 
 const prompt = [
-
     {
         role: "system",
         content: SYSTEM_PROMPT
     },
-
     ...recentMessages
-
 ];
 
+const result = await mochi(prompt, {
+    max_new_tokens: 80,
+    temperature: 0.8,
+    do_sample: true
+});
 
-// Generate jawaban
-const result =
-    await mochi(
-        prompt,
-        {
-            max_new_tokens: 100,
-
-            temperature: 0.8,
-
-            do_sample: true
-        }
-    );
-
+const generated = result[0].generated_text;
 
 let answer = "";
 
-
-const generated =
-    result[0].generated_text;
-
-
-// Kalau hasil berupa percakapan
 if (Array.isArray(generated)) {
 
-    const last =
-        generated[generated.length - 1];
+    const assistantMessages =
+        generated.filter(
+            message =>
+                message.role === "assistant"
+        );
 
-
-    if (
-        last &&
-        last.content
-    ) {
+    if (assistantMessages.length > 0) {
 
         answer =
-            last.content.trim();
-
+            assistantMessages[
+                assistantMessages.length - 1
+            ].content.trim();
     }
-
 }
 
 
-// Fallback
+// Bersihkan kemungkinan model mengulang prompt
+answer = answer
+    .replace(/^Mochi\s*:\s*/i, "")
+    .replace(/^Assistant\s*:\s*/i, "")
+    .trim();
+
+
+// Kalau kosong
 if (!answer) {
 
     answer =
-        "Hmm... otakku nge-lag 😭🍡";
+        "Hmm... Mochi lagi mikir keras 😭🍡";
 }
 
 
-// Simpan jawaban AI
 messages.push({
     role: "assistant",
     content: answer
 });
-
 
 return answer;
 
 
 }
 
-// ========================================
-// KIRIM PESAN
-// ========================================
-
 async function sendMessage() {
 
-const message =
-    userInput.value.trim();
+const message = userInput.value.trim();
 
-
-if (
-    message === "" ||
-    !mochi
-) {
-
+if (!message || !mochi) {
     return;
 }
 
+addMessage(message, "user");
 
-// Tampilkan pesan user
-addMessage(
-    message,
-    "user"
-);
-
-
-// Kosongkan input
 userInput.value = "";
 
-
-// Disable sementara
 userInput.disabled = true;
-
 sendButton.disabled = true;
-
-sendButton.textContent =
-    "...";
-
+sendButton.textContent = "...";
 
 try {
 
     const response =
-        await getMochiResponse(
-            message
-        );
-
+        await getMochiResponse(message);
 
     addMessage(
         response,
         "ai"
     );
 
-}
-
-
-catch (error) {
+} catch (error) {
 
     console.error(error);
 
-
     addMessage(
-        "Aduhh 😭🍡 otak Mochi error. " +
-        "Coba kirim lagi yaa.",
+        "Aduhh 😭 otak Mochi error.",
         "ai"
     );
 }
 
-
-// Aktifkan kembali
 userInput.disabled = false;
-
 sendButton.disabled = false;
-
-sendButton.textContent =
-    "Kirim";
+sendButton.textContent = "Kirim";
 
 userInput.focus();
 
 
 }
 
-// ========================================
-// EVENT BUTTON
-// ========================================
-
 sendButton.addEventListener(
 "click",
 sendMessage
 );
 
-// ========================================
-// EVENT ENTER
-// ========================================
-
 userInput.addEventListener(
 "keydown",
-function(event) {
+event => {
 
     if (event.key === "Enter") {
-
         sendMessage();
-
     }
 
 }
 
 
 );
-
-// ========================================
-// JALANKAN MOCHI
-// ========================================
 
 loadAI();
