@@ -1,86 +1,115 @@
 import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2";
 
+// ========================================
+// ELEMENT HTML
+// ========================================
+
 const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
 const sendButton = document.getElementById("send-button");
 
+// ========================================
+// AI
+// ========================================
+
 let mochi = null;
+
 let conversation = [];
 
 // ========================================
 // KEPRIBADIAN MOCHI 🍡
 // ========================================
 
-const MOCHI_PERSONALITY = `
-Kamu adalah Mochi 🍡, teman ngobrol santai.
+const MOCHI_PROMPT = `
+Kamu adalah Mochi 🍡.
 
-Kamu berbicara dalam bahasa Indonesia.
-Gaya bicaramu:
+Kamu adalah teman ngobrol virtual dari Indonesia.
 
+Kepribadianmu:
+
+lucu
 santai
 ramah
-lucu
 sedikit jahil
 seperti teman sebaya
-gunakan emoji secukupnya
-jangan terlalu formal
-jangan terlalu panjang
+tidak formal
+suka menggunakan emoji secukupnya
 
-PENTING:
-Jawab pertanyaan atau pesan user secara langsung.
+Aturan:
+
+Selalu jawab dalam bahasa Indonesia.
+Jawab pesan user secara langsung.
 Jangan mengulang pesan user.
-Jangan membuat kalimat acak.
-Jangan menulis "User:" atau "Assistant:".
+Jangan menyalin pesan user.
+Jangan membuat kata-kata acak.
+Jangan menulis "User:".
+Jangan menulis "Assistant:".
 Jangan meneruskan kalimat user.
+Kalau user bercerita, tanggapi ceritanya.
+Kalau user bertanya, jawab pertanyaannya.
+Kalau user sedang sedih, jadilah teman yang mendengarkan.
+Jangan terlalu panjang.
 `;
 
 // ========================================
-// TAMPILKAN PESAN
+// MENAMPILKAN PESAN
 // ========================================
 
 function addMessage(text, sender) {
 
-const message = document.createElement("div");
+const messageDiv =
+    document.createElement("div");
 
-message.classList.add(
-    "message",
-    sender === "user"
-        ? "user-message"
-        : "ai-message"
-);
+messageDiv.classList.add("message");
 
 
-const avatar = document.createElement("div");
+const avatar =
+    document.createElement("div");
 
 avatar.classList.add("avatar");
 
-avatar.textContent =
-    sender === "user"
-        ? "👤"
-        : "🍡";
 
-
-const bubble = document.createElement("div");
+const bubble =
+    document.createElement("div");
 
 bubble.classList.add("bubble");
 
 bubble.textContent = text;
 
 
+// USER
 if (sender === "user") {
 
-    message.appendChild(bubble);
-    message.appendChild(avatar);
+    messageDiv.classList.add(
+        "user-message"
+    );
 
-} else {
+    avatar.textContent = "👤";
 
-    message.appendChild(avatar);
-    message.appendChild(bubble);
+    messageDiv.appendChild(bubble);
+
+    messageDiv.appendChild(avatar);
 
 }
 
 
-chatBox.appendChild(message);
+// MOCHI
+else {
+
+    messageDiv.classList.add(
+        "ai-message"
+    );
+
+    avatar.textContent = "🍡";
+
+    messageDiv.appendChild(avatar);
+
+    messageDiv.appendChild(bubble);
+
+}
+
+
+chatBox.appendChild(messageDiv);
 
 chatBox.scrollTop =
     chatBox.scrollHeight;
@@ -89,14 +118,15 @@ chatBox.scrollTop =
 }
 
 // ========================================
-// LOAD AI
+// LOAD MODEL 🧠
 // ========================================
 
 async function loadAI() {
 
 addMessage(
-    "Mochi lagi nyiapin otak baru... 🧠🍡\n\n" +
-    "Pertama kali mungkin agak lama yaa 😭",
+    "Mochi lagi bangun... 🥱🍡\n\n" +
+    "Otak baru lagi disiapin. " +
+    "Pertama kali memang bisa agak lama 😭",
     "ai"
 );
 
@@ -105,13 +135,14 @@ try {
 
     mochi = await pipeline(
         "text-generation",
-        "Qwen/Qwen2.5-0.5B-Instruct",
+        "onnx-community/Qwen2.5-0.5B-Instruct",
         {
             dtype: "q4"
         }
     );
 
 
+    // Aktifkan input
     userInput.disabled = false;
 
     sendButton.disabled = false;
@@ -125,7 +156,7 @@ try {
 
     addMessage(
         "AKU UDAH BANGUNNN 😭🍡✨\n\n" +
-        "Otak baru Mochi siap diajak ngobrol!",
+        "Sini ngobrol sama Mochi!",
         "ai"
     );
 
@@ -137,30 +168,41 @@ try {
 
 catch (error) {
 
-    console.error(error);
+    console.error(
+        "MOCHI ERROR:",
+        error
+    );
+
 
     addMessage(
-        "Yahhh 😭🍡 gagal memuat otakku.\n\n" +
-        "Coba refresh halaman.",
+        "Yahhh 😭🍡 Mochi gagal bangun.\n\n" +
+        "Coba refresh halaman sekali lagi.",
         "ai"
     );
 
+
     sendButton.textContent =
-        "Error";
+        "Error 😭";
 }
 
 
 }
 
 // ========================================
-// BUAT JAWABAN
+// GENERATE JAWABAN 🧠
 // ========================================
 
-async function generateResponse(userText) {
+async function getMochiResponse(
+userText
+) {
 
+// Simpan pesan user
 conversation.push({
+
     role: "user",
+
     content: userText
+
 });
 
 
@@ -169,11 +211,13 @@ const recentConversation =
     conversation.slice(-8);
 
 
+// Gabungkan system + percakapan
 const messages = [
 
     {
         role: "system",
-        content: MOCHI_PERSONALITY
+
+        content: MOCHI_PROMPT
     },
 
     ...recentConversation
@@ -181,18 +225,20 @@ const messages = [
 ];
 
 
-const result = await mochi(
-    messages,
-    {
-        max_new_tokens: 120,
+// Jalankan model
+const result =
+    await mochi(
+        messages,
+        {
+            max_new_tokens: 100,
 
-        temperature: 0.7,
+            temperature: 0.7,
 
-        do_sample: true,
+            do_sample: true,
 
-        repetition_penalty: 1.15
-    }
-);
+            repetition_penalty: 1.15
+        }
+    );
 
 
 const generated =
@@ -202,36 +248,45 @@ const generated =
 let answer = "";
 
 
+// Ambil pesan assistant terakhir
 if (Array.isArray(generated)) {
 
-    const assistantMessages =
-        generated.filter(
-            item =>
-                item.role === "assistant"
-        );
-
-
-    if (
-        assistantMessages.length > 0
+    for (
+        let i = generated.length - 1;
+        i >= 0;
+        i--
     ) {
 
-        answer =
-            assistantMessages[
-                assistantMessages.length - 1
-            ].content.trim();
+        if (
+            generated[i].role ===
+            "assistant"
+        ) {
 
+            answer =
+                generated[i]
+                    .content
+                    .trim();
+
+            break;
+        }
     }
-
 }
 
 
-// Bersihkan kemungkinan label
+// Bersihkan label yang mungkin muncul
 answer = answer
-    .replace(/^Assistant\s*:/i, "")
-    .replace(/^Mochi\s*:/i, "")
+    .replace(
+        /^Assistant\s*:\s*/i,
+        ""
+    )
+    .replace(
+        /^Mochi\s*:\s*/i,
+        ""
+    )
     .trim();
 
 
+// Kalau jawabannya kosong
 if (!answer) {
 
     answer =
@@ -239,9 +294,13 @@ if (!answer) {
 }
 
 
+// Simpan jawaban
 conversation.push({
+
     role: "assistant",
+
     content: answer
+
 });
 
 
@@ -260,20 +319,30 @@ const text =
     userInput.value.trim();
 
 
-if (!text || !mochi) {
+// Jangan kirim kalau kosong
+if (text === "") {
     return;
 }
 
 
+// Jangan kirim kalau AI belum siap
+if (!mochi) {
+    return;
+}
+
+
+// Tampilkan pesan user
 addMessage(
     text,
     "user"
 );
 
 
+// Bersihkan input
 userInput.value = "";
 
 
+// Matikan input sementara
 userInput.disabled = true;
 
 sendButton.disabled = true;
@@ -285,9 +354,12 @@ sendButton.textContent =
 try {
 
     const answer =
-        await generateResponse(text);
+        await getMochiResponse(
+            text
+        );
 
 
+    // Tampilkan jawaban
     addMessage(
         answer,
         "ai"
@@ -298,16 +370,20 @@ try {
 
 catch (error) {
 
-    console.error(error);
+    console.error(
+        "CHAT ERROR:",
+        error
+    );
 
 
     addMessage(
-        "Aduhh 😭🍡 Mochi error. Coba lagi ya.",
+        "Aduhh 😭🍡 otak Mochi error.",
         "ai"
     );
 }
 
 
+// Hidupkan lagi
 userInput.disabled = false;
 
 sendButton.disabled = false;
@@ -321,7 +397,7 @@ userInput.focus();
 }
 
 // ========================================
-// BUTTON
+// KLIK KIRIM
 // ========================================
 
 sendButton.addEventListener(
@@ -335,9 +411,11 @@ sendMessage
 
 userInput.addEventListener(
 "keydown",
-event => {
+function(event) {
 
-    if (event.key === "Enter") {
+    if (
+        event.key === "Enter"
+    ) {
 
         sendMessage();
 
@@ -349,7 +427,7 @@ event => {
 );
 
 // ========================================
-// START MOCHI
+// JALANKAN MOCHI
 // ========================================
 
 loadAI();
